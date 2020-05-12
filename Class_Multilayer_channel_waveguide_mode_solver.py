@@ -7,6 +7,8 @@ import numpy as np
 from Channels_multilayer import Channel
 import matplotlib.pyplot as plt
 from tkinter import filedialog
+from scipy.stats import multivariate_normal # these are for the line profile profile
+import scipy
 
 class Mul_Ch_Wav_Mod_Sol(Frame):
     def __init__(self, master):
@@ -29,6 +31,8 @@ class Mul_Ch_Wav_Mod_Sol(Frame):
         self.grating_period = DoubleVar();self.grating_period.set(0.83);self.diffraction_mode = IntVar();self.diffraction_mode.set(1);
         self.Nmodes = IntVar();self.Nmodes.set(2)
         self.FileName=StringVar();self.FileName.set("test")
+        #for the profile
+        self.x_cut = DoubleVar();self.x_cut.set(3.1);self.y_cut = DoubleVar();self.y_cut.set(2.3)
         #self.vVaryH1LC_SaveAs_loc = StringVar();self.vVaryH1LC_SaveAs_loc.set('C:/Users/Home')#location to save
         self.create_labels()
         self.create_Entrys()
@@ -58,13 +62,14 @@ class Mul_Ch_Wav_Mod_Sol(Frame):
         Entry(self, width=8, borderwidth=5, textvariable=self.LC_2).grid(row=13, column=3, padx=5, pady=5)
         Entry(self, width=5, borderwidth=5, textvariable=self.H2value).grid(row=13, column=6, padx=5, pady=5)
         Entry(self.labelFrame1, width=10, borderwidth=5, textvariable=self.FileName).pack()
-
+        # for the grating coupler
         Entry(self, width=5, borderwidth=5, textvariable=self.diffraction_mode).grid(row=16, column=5, padx=5, pady=5)
         Entry(self, width=5, borderwidth=5, textvariable=self.grating_period).grid(row=17, column=5, padx=5, pady=5)
         Entry(self, width=5, borderwidth=5, textvariable=self.Nmodes).grid(row=11, column=5, padx=5, pady=5)
         #self.Simulat_file = Entry(self, width=10, borderwidth=5, textvariable=self.vSimulat_file);self.Simulat_file.grid(row=14, column=6, padx=5, pady=5)
         ########
-        #for the grating coupler
+        Entry(self, width=5, borderwidth=5, textvariable=self.x_cut).grid(row=15, column=3, padx=5, pady=5)
+        Entry(self, width=5, borderwidth=5, textvariable=self.y_cut).grid(row=15, column=4, padx=5, pady=5)
 
     def create_labels(self):
         Label(self, text = "Refractive indices").grid(row = 0, column= 2)
@@ -110,10 +115,11 @@ class Mul_Ch_Wav_Mod_Sol(Frame):
         Label(self, text="@ constant H2(\u03BCm) =").place(x=382, y=390)
         #Label(self, text="Save as:", font="Calibri 15").place(x=165, y=405)
         # Label(self, text="Choose file to plot", font="Calibri 12").place(x=365, y=405)
-        Label(self, text="Diffraction order # =").place(x=320, y=560)
-        Label(self, text="Grating period (\u039B) =").place(x=320, y=595)
+        Label(self, text="Diffraction order # =").place(x=320, y=605)
+        Label(self, text="Grating period (\u039B) =").place(x=320, y=640)
         Label(self, text="# of modes =").place(x=355, y=332)
-
+        Label(self, text="Horizontal & vertical lines intersecting @ X =").place(x=25, y=565)
+        Label(self, text="& Y =").place(x=315, y=565)
     def create_buttons(self):
         Button(self, text="Plot_indices", fg='green', command=self.Plot_indices).grid(row=18, column=3)
         Button(self, text="Solve", fg='green', command=self.Solve).grid(row=18, column=2)
@@ -124,6 +130,7 @@ class Mul_Ch_Wav_Mod_Sol(Frame):
         Button(self.labelFrame, text="Browse A File", command=self.fileDialog).grid(row=14, column=6)#######################################################
         Button(self.labelFrame, text="Plot Ecc.", command=self.plot_simulate_ecc).grid(row=15, column=6)
         Button(self.labelFrame, text="Plot \u0394n", command=self.plot_simulate_dn).grid(row=16, column=6)
+        Button(self.labelFrame, text="Plot profile",fg='green', command=self.plot_line_profile).grid(row=17, column=6)
         Button(self, text="Coupling \u03B8", fg='green', command=self.NumOf_guided_modes).grid(row=18, column=5)#grating
         #Button(self.labelFrame1, text="Browse\n directory", command=self.fileDialog_saveas).grid(row=14, column=3)
     def Plot_indices(self):
@@ -143,13 +150,55 @@ class Mul_Ch_Wav_Mod_Sol(Frame):
         self.df = pd.read_csv(self.vSimulat, sep=' ', comment='#', header=None)
         self.dr=self.df.to_numpy()
         #print(self.filename)
+    def plot_line_profile(self):
+        fig, main_ax = plt.subplots(figsize=(6, 6))
+        divider = make_axes_locatable(main_ax)
+        top_ax = divider.append_axes("top", 1.05, pad=0.1, sharex=main_ax)
+        right_ax = divider.append_axes("right", 1.05, pad=0.1, sharey=main_ax)
+        self.curX = self.x_cut.get()  # position of the vertical line  They should be always a float with one decimal like 1.1 or 1.2 etc...
+        self.curY = self.y_cut.get()  # position of the horizontal line
+        self.w_array = np.arange(self.LC_1.get(), self.LC_2.get(),0.1)  # introduce the x axis scale (xmin,xmax,step) we should know all these three parameters from the file we introduce in the  next step
+        self.h_array = np.arange(self.H1_1.get(),self.H1_2.get(), 0.1)  # introduce the y axis scale (ymin,ymax,step)
+        self.DnCB=((0.001*(float(self.WL.get()))*float(self.OPR.get()))/180)
+        ecc = (self.DnCB / (self.dr + np.sqrt(self.DnCB ** 2 + self.dr ** 2)))  # define eccentricity matrix
+        # make some labels invisible
+        top_ax.xaxis.set_tick_params(labelbottom=False)
+        right_ax.yaxis.set_tick_params(labelleft=False)
+
+        main_ax.set_xlabel('W (\u03BCm)')
+        main_ax.set_ylabel('H (\u03BCm)')
+        top_ax.set_ylabel(r'E$_{cc}$')
+        right_ax.set_xlabel(r'E$_{cc}$')
+        z_max = 1  # z.max()
+        self.curX = np.around(float(self.curX), 2)
+        self.curY = np.around(float(self.curY), 2)
+        # print((ecc[(np.argmax(np.where(np.around(self.w_array,2)==self.curY,self.w_array,0))),:]))############################
+        im = main_ax.imshow(self.DnCB / (self.dr + np.sqrt(self.DnCB**2 + self.dr**2)),cmap="hot", extent=[self.LC_1.get(), self.LC_2.get(), self.H1_1.get(),self.H1_2.get()], origin='lower')
+        main_ax.autoscale(enable=False)
+        right_ax.autoscale(enable=False)
+        top_ax.autoscale(enable=False)
+        right_ax.set_xlim(right=z_max)
+        top_ax.set_ylim(top=z_max)
+        self.v_line = main_ax.axvline(self.curX, color='b')
+        self.h_line = main_ax.axhline(self.curY, color='g')
+        # print(ecc[:,(np.argmax(np.where(np.around(self.w_array,2)==self.curY,self.w_array,0)))])#############################
+        self.v_prof, = right_ax.plot(ecc[:, (np.argmax(np.where(np.around(self.w_array, 2) == self.curX, self.w_array, 0)))], self.h_array,'b-')  # (np.argmax(np.where(np.around(self.h_array,2)==self.curY,self.h_array,0)))
+        self.h_prof, = top_ax.plot(self.w_array, ecc[(np.argmax(np.where(np.around(self.h_array, 2) == self.curY, self.h_array, 0))), :],'g-')  # (np.argmax(np.where(np.around(self.w_array,2)==self.curX,self.w_array,0)))
+        # define the colorbar##################################
+        cax = divider.new_vertical(size="5%", pad=0.4, title="Eccentricity")
+        fig.add_axes(cax)
+        fig.colorbar(im, cax=cax, orientation="horizontal")
+        cax.set_xlim(0, 1)
+        cax.set
+        # plt.savefig('colorbar_positioning_03.png', format='png', bbox_inches='tight')##################
+        plt.show()
     def plot_simulate_ecc(self):
         fig, ax = plt.subplots(figsize=(8, 6))
         #plt.title("Eccentricy as a function of channel dimensions")
         print("Optcal rotaion is: "+ str(self.OPR.get()))
         self.DnCB=((0.001*(float(self.WL.get()))*float(self.OPR.get()))/180)
         print("Circular bireferengence (CB) is: "+ str(self.DnCB))
-        im = plt.imshow(self.DnCB / (self.dr + np.sqrt(self.DnCB**2 + self.dr**2)), extent=[self.LC_1.get(), self.LC_2.get(), self.H1_1.get(),self.H1_2.get()], origin='lower')
+        im = plt.imshow(self.DnCB / (self.dr + np.sqrt(self.DnCB**2 + self.dr**2)),cmap="hot", extent=[self.LC_1.get(), self.LC_2.get(), self.H1_1.get(),self.H1_2.get()], origin='lower')
         plt.xlabel("H1 (\u03BCm)")
         plt.ylabel("LC (\u03BCm)")
         divider = make_axes_locatable(ax)
@@ -158,7 +207,6 @@ class Mul_Ch_Wav_Mod_Sol(Frame):
         fig.colorbar(im, cax=cax, orientation="horizontal")
 ####################################################################################################### mshu x y labela wash karw
         # plt.savefig('colorbar_positioning_03.png', format='png', bbox_inches='tight')
-        plt.hot()
         plt.show()
         plt.close()
     def printt(self):
@@ -167,7 +215,7 @@ class Mul_Ch_Wav_Mod_Sol(Frame):
 
         fig, ax = plt.subplots(figsize=(8, 6))
         #plt.title("Modal bireferengence as a function of channel dimensions")
-        im = plt.imshow(self.dr,  extent=[self.LC_1.get(), self.LC_2.get(), self.H1_1.get(),self.H1_2.get()], origin='lower')
+        im = plt.imshow(self.dr,cmap="hot",  extent=[self.LC_1.get(), self.LC_2.get(), self.H1_1.get(),self.H1_2.get()], origin='lower')
         plt.xlabel("H1 (\u03BCm)")
         plt.ylabel("LC (\u03BCm)")
         divider = make_axes_locatable(ax)
@@ -176,7 +224,6 @@ class Mul_Ch_Wav_Mod_Sol(Frame):
         fig.colorbar(im, cax=cax,orientation="horizontal")
 
         # plt.savefig('colorbar_positioning_03.png', format='png', bbox_inches='tight')
-        plt.hot()
         plt.show()
         plt.close()
     def close_all(self):
@@ -246,6 +293,6 @@ if __name__ == '__main__':
     root = Tk()  # we car write any name instead of root
     root.title('Multilayer channel waveguide mode solver')
     # root.iconbitmap('rib_waveguide.ico')
-    root.geometry("550x670")
+    root.geometry("550x700")
     app = Mul_Ch_Wav_Mod_Sol(root)
     app.mainloop()
