@@ -80,6 +80,7 @@ class Channel():
         CB=self.OR*1e-3/180*self.wl
         ecc=CB/(DN+np.sqrt(CB*CB+DN*DN))
         reponse+="ecc={:.3f}\n".format(ecc)
+        reponse+="S3={:.3f},{:.3f}\n".format(np.sin(2*np.arctan((np.real(ecc))**-1)),np.sin(2*np.arctan(np.real(ecc))))
         return reponse
 
     def NumOf_guidedModes(self,Nmodes=2): # to get a list of (all guided modes, not leaky modes).
