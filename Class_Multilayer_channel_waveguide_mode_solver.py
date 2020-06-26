@@ -1,4 +1,4 @@
-
+#!/usr/bin/python3
 from tkinter import *
 from tkinter import messagebox
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -22,7 +22,7 @@ class Mul_Ch_Wav_Mod_Sol(Frame):
         self.nL2_1 = DoubleVar();self.nL2_1.set(1.62);self.nL2_2 = DoubleVar();self.nL2_2.set(1.62);self.nL2_3 = DoubleVar();self.nL2_3.set(1.62);
         self.nSub_1 = DoubleVar();self.nSub_1.set(1.61);self.nSub_2 = DoubleVar();self.nSub_2.set(1.61);self.nSub_3 = DoubleVar();self.nSub_3.set(1.61);
         self.TL_1 = DoubleVar();self.TL_1.set(2.3);self.TL_2 = DoubleVar();self.TL_2.set(2.);self.TChan = DoubleVar();self.TChan.set(3.1)
-        self.WL = DoubleVar();self.WL.set(0.64);self.OPR = DoubleVar();self.OPR.set(4.0);self.vVaryH1LC_H1 = StringVar();self.vVaryH1LC_H1.set('1.0 to 4.0');
+        self.WL = DoubleVar();self.WL.set(0.64);self.OPR = DoubleVar();self.OPR.set(1.97);self.vVaryH1LC_H1 = StringVar();self.vVaryH1LC_H1.set('1.0 to 4.0');
         self.vVaryH1LC_LC = StringVar();self.vVaryH1LC_LC.set('1.5 to 5.0');self.vVaryH1LC_H2 = DoubleVar();self.vVaryH1LC_H2.set(1.0);
         self.vVaryH1LC_SaveAs = StringVar();self.vVaryH1LC_SaveAs.set('Filename');self.vSimulat = DoubleVar();self.vSimulat.set(np.zeros((1,1)))
         self.LC_1= DoubleVar();self.LC_1.set(1.5); self.LC_2= DoubleVar();self.LC_2.set(5.0)
