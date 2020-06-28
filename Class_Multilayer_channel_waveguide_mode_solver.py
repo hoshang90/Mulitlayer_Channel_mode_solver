@@ -3,6 +3,8 @@ from tkinter import *
 from tkinter import messagebox
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import pandas as pd
+import os
+import matplotlib.colors as colors
 import numpy as np
 from Channels_multilayer import Channel
 import matplotlib.pyplot as plt
@@ -30,7 +32,7 @@ class Mul_Ch_Wav_Mod_Sol(Frame):
         self.H2value=DoubleVar();self.H2value.set(1.)
         self.grating_period = DoubleVar();self.grating_period.set(0.83);self.diffraction_mode = IntVar();self.diffraction_mode.set(1);
         self.Nmodes = IntVar();self.Nmodes.set(2)
-        self.FileName=StringVar();self.FileName.set("test")
+        self.FileName=StringVar();self.FileName.set("filename.ecc")
         #for the profile
         self.x_cut = DoubleVar();self.x_cut.set(3.1);self.y_cut = DoubleVar();self.y_cut.set(2.3)
         #self.vVaryH1LC_SaveAs_loc = StringVar();self.vVaryH1LC_SaveAs_loc.set('C:/Users/Home')#location to save
@@ -61,7 +63,7 @@ class Mul_Ch_Wav_Mod_Sol(Frame):
         Entry(self, width=8, borderwidth=5, textvariable=self.LC_1).grid(row=13, column=2, padx=5, pady=5)
         Entry(self, width=8, borderwidth=5, textvariable=self.LC_2).grid(row=13, column=3, padx=5, pady=5)
         Entry(self, width=5, borderwidth=5, textvariable=self.H2value).grid(row=13, column=6, padx=5, pady=5)
-        Entry(self.labelFrame1, width=10, borderwidth=5, textvariable=self.FileName).pack()
+        Entry(self.labelFrame1, width=12, borderwidth=5, textvariable=self.FileName).pack()
         # for the grating coupler
         Entry(self, width=5, borderwidth=5, textvariable=self.diffraction_mode).grid(row=16, column=5, padx=5, pady=5)
         Entry(self, width=5, borderwidth=5, textvariable=self.grating_period).grid(row=17, column=5, padx=5, pady=5)
@@ -143,13 +145,15 @@ class Mul_Ch_Wav_Mod_Sol(Frame):
                        OR=self.OPR.get())
         self.g.Traceindice()
     def fileDialog_saveas(self): # to browse locaation of a file
-        self.vVaryH1LC_SaveAs_loc = filedialog.askdirectory(initialdir="", title="Select the location")#(("all files", "*.*"), ("csv files", "*.csv")))
+        self.vVaryH1LC_SaveAs_loc = filedialog.askdirectory(initialdir=os.getcwd(), title="Select the location")#(("all files", "*.*"), ("csv files", "*.csv")))
     def fileDialog(self): # to brows the file
-        self.vSimulat = filedialog.askopenfilename(initialdir="", title="Select A File", filetype=
+        self.vSimulat = filedialog.askopenfilename(initialdir=os.getcwd(), title="Select A File", filetype=
         (("all files", "*.*"), ("csv files", "*.csv")))#(("all files", "*.*"), ("csv files", "*.csv")))
-        self.df = pd.read_csv(self.vSimulat, sep=' ', comment='#', header=None)
-        self.dr=self.df.to_numpy()
-        #print(self.filename)
+        if self.vSimulat:
+            self.df = pd.read_csv(self.vSimulat, sep=' ', comment='#', header=None)
+            self.dr=self.df.to_numpy()
+        else:
+            messagebox.showinfo("Warning",'Please choose a file to plot')
     def plot_line_profile(self):
         fig, main_ax = plt.subplots(figsize=(6, 6))
         divider = make_axes_locatable(main_ax)
@@ -173,7 +177,7 @@ class Mul_Ch_Wav_Mod_Sol(Frame):
         self.curX = np.around(float(self.curX), 2)
         self.curY = np.around(float(self.curY), 2)
         # print((ecc[(np.argmax(np.where(np.around(self.w_array,2)==self.curY,self.w_array,0))),:]))############################
-        im = main_ax.imshow(self.DnCB / (self.dr + np.sqrt(self.DnCB**2 + self.dr**2)),cmap="hot", extent=[self.LC_1.get(), self.LC_2.get(), self.H1_1.get(),self.H1_2.get()], origin='lower')
+        im = main_ax.imshow(self.DnCB / (self.dr + np.sqrt(self.DnCB**2 + self.dr**2)),cmap="nipy_spectral", extent=[self.LC_1.get(), self.LC_2.get(), self.H1_1.get(),self.H1_2.get()], origin='lower')
         main_ax.autoscale(enable=False)
         right_ax.autoscale(enable=False)
         top_ax.autoscale(enable=False)
@@ -193,39 +197,43 @@ class Mul_Ch_Wav_Mod_Sol(Frame):
         # plt.savefig('colorbar_positioning_03.png', format='png', bbox_inches='tight')##################
         plt.show()
     def plot_simulate_ecc(self):
-        fig, ax = plt.subplots(figsize=(8, 6))
-        #plt.title("Eccentricy as a function of channel dimensions")
-        print("Optcal rotaion is: "+ str(self.OPR.get()))
-        self.DnCB=((0.001*(float(self.WL.get()))*float(self.OPR.get()))/180)
-        print("Circular bireferengence (CB) is: "+ str(self.DnCB))
-        im = plt.imshow(self.DnCB / (self.dr + np.sqrt(self.DnCB**2 + self.dr**2)),cmap="hot", extent=[self.LC_1.get(), self.LC_2.get(), self.H1_1.get(),self.H1_2.get()], origin='lower')
-        plt.xlabel("H1 (\u03BCm)")
-        plt.ylabel("LC (\u03BCm)")
-        divider = make_axes_locatable(ax)
-        cax = divider.new_vertical(size="5%", pad=0.4, title="Eccentricity")
-        fig.add_axes(cax)
-        fig.colorbar(im, cax=cax, orientation="horizontal")
-####################################################################################################### mshu x y labela wash karw
+        if self.vSimulat:
+            fig, ax = plt.subplots(figsize=(8, 6))
+            #plt.title("Eccentricy as a function of channel dimensions")
+            print("Optcal rotaion is: "+ str(self.OPR.get()))
+            self.DnCB=((0.001*(float(self.WL.get()))*float(self.OPR.get()))/180)
+            print("Circular bireferengence (CB) is: "+ str(self.DnCB))
+            im = plt.imshow(self.DnCB / (self.dr + np.sqrt(self.DnCB**2 + self.dr**2)),cmap="nipy_spectral", extent=[self.LC_1.get(), self.LC_2.get(), self.H1_1.get(),self.H1_2.get()], origin='lower')
+            plt.xlabel("H1 (\u03BCm)")
+            plt.ylabel("LC (\u03BCm)")
+            divider = make_axes_locatable(ax)
+            cax = divider.new_vertical(size="5%", pad=0.4, title="Eccentricity")
+            fig.add_axes(cax)
+            fig.colorbar(im, cax=cax, orientation="horizontal")
+###################################################################################################### mshu x y labela wash karw
         # plt.savefig('colorbar_positioning_03.png', format='png', bbox_inches='tight')
-        plt.show()
-        plt.close()
+            plt.show()
+            plt.close()
+        else:
+            messagebox.showinfo("Warning",'Please choose a file to plot')
     def printt(self):
         print(self.filename)
     def plot_simulate_dn(self):
-
-        fig, ax = plt.subplots(figsize=(8, 6))
-        #plt.title("Modal bireferengence as a function of channel dimensions")
-        im = plt.imshow(self.dr,cmap="hot",  extent=[self.LC_1.get(), self.LC_2.get(), self.H1_1.get(),self.H1_2.get()], origin='lower')
-        plt.xlabel("H1 (\u03BCm)")
-        plt.ylabel("LC (\u03BCm)")
-        divider = make_axes_locatable(ax)
-        cax = divider.new_vertical(size="5%", pad=0.4, title="Modal bireferengence")
-        fig.add_axes(cax)
-        fig.colorbar(im, cax=cax,orientation="horizontal")
-
-        # plt.savefig('colorbar_positioning_03.png', format='png', bbox_inches='tight')
-        plt.show()
-        plt.close()
+        if self.vSimulat:
+            fig, ax = plt.subplots(figsize=(8, 6))
+            #plt.title("Modal bireferengence as a function of channel dimensions")
+            im = plt.imshow(self.dr,cmap="nipy_spectral",norm=colors.LogNorm(vmin=self.dr.min(), vmax=10*self.dr.max()),extent=[self.LC_1.get(), self.LC_2.get(), self.H1_1.get(),self.H1_2.get()], origin='lower')
+            plt.xlabel("H1 (\u03BCm)")
+            plt.ylabel("LC (\u03BCm)")
+            divider = make_axes_locatable(ax)
+            cax = divider.new_vertical(size="5%", pad=0.4, title="Modal bireferengence")
+            fig.add_axes(cax)
+            fig.colorbar(im, cax=cax,orientation="horizontal")
+            # plt.savefig('colorbar_positioning_03.png', format='png', bbox_inches='tight')
+            plt.show()
+            plt.close()
+        else:
+            messagebox.showinfo("Warning",'Please choose a file to plot')
     def close_all(self):
         # Button(self.root,text = 'Click Me', command=lambda:[self.funcA(), self.funcB(), self.funcC()])
         self.master.destroy()
