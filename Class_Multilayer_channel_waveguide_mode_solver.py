@@ -198,20 +198,21 @@ class Mul_Ch_Wav_Mod_Sol(Frame):
         plt.show()
     def plot_simulate_ecc(self):
         if self.vSimulat:
-            fig, ax = plt.subplots(figsize=(8, 6))
+            fig, self.ax = plt.subplots(figsize=(8, 6))
             #plt.title("Eccentricy as a function of channel dimensions")
             print("Optcal rotaion is: "+ str(self.OPR.get()))
             self.DnCB=((0.001*(float(self.WL.get()))*float(self.OPR.get()))/180)
             print("Circular bireferengence (CB) is: "+ str(self.DnCB))
             im = plt.imshow(self.DnCB / (self.dr + np.sqrt(self.DnCB**2 + self.dr**2)),cmap="nipy_spectral", extent=[self.LC_1.get(), self.LC_2.get(), self.H1_1.get(),self.H1_2.get()], origin='lower')
-            plt.xlabel("H1 (\u03BCm)")
-            plt.ylabel("LC (\u03BCm)")
-            divider = make_axes_locatable(ax)
+            plt.xlabel('W (\u03BCm)')
+            plt.ylabel('H (\u03BCm)')
+            divider = make_axes_locatable(self.ax)
             cax = divider.new_vertical(size="5%", pad=0.4, title="Eccentricity")
             fig.add_axes(cax)
             fig.colorbar(im, cax=cax, orientation="horizontal")
 ###################################################################################################### mshu x y labela wash karw
         # plt.savefig('colorbar_positioning_03.png', format='png', bbox_inches='tight')
+            cid = fig.canvas.mpl_connect('button_press_event', self.onclick)
             plt.show()
             plt.close()
         else:
@@ -220,20 +221,27 @@ class Mul_Ch_Wav_Mod_Sol(Frame):
         print(self.filename)
     def plot_simulate_dn(self):
         if self.vSimulat:
-            fig, ax = plt.subplots(figsize=(8, 6))
+            fig, self.ax = plt.subplots(figsize=(8, 6))
             #plt.title("Modal bireferengence as a function of channel dimensions")
-            im = plt.imshow(self.dr,cmap="nipy_spectral",norm=colors.LogNorm(vmin=self.dr.min(), vmax=10*self.dr.max()),extent=[self.LC_1.get(), self.LC_2.get(), self.H1_1.get(),self.H1_2.get()], origin='lower')
-            plt.xlabel("H1 (\u03BCm)")
-            plt.ylabel("LC (\u03BCm)")
-            divider = make_axes_locatable(ax)
+            im = plt.imshow(self.dr,cmap="nipy_spectral",norm=colors.LogNorm(vmin=self.dr.min(),\
+                    vmax=10*self.dr.max()),extent=[self.LC_1.get(), self.LC_2.get(), self.H1_1.get()\
+                    ,self.H1_2.get()], origin='lower')
+            plt.xlabel('W (\u03BCm)')
+            plt.ylabel('H (\u03BCm)')
+            divider = make_axes_locatable(self.ax)
             cax = divider.new_vertical(size="5%", pad=0.4, title="Modal bireferengence")
             fig.add_axes(cax)
             fig.colorbar(im, cax=cax,orientation="horizontal")
             # plt.savefig('colorbar_positioning_03.png', format='png', bbox_inches='tight')
+            cid = fig.canvas.mpl_connect('button_press_event', self.onclick)
             plt.show()
             plt.close()
         else:
             messagebox.showinfo("Warning",'Please choose a file to plot')
+    def onclick(self,event):
+        print('button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %(event.button, event.x, event.y, event.xdata, event.ydata))
+        self.ax.plot(event.xdata, event.ydata, 'k+',markersize=15)
+        plt.show()
     def close_all(self):
         # Button(self.root,text = 'Click Me', command=lambda:[self.funcA(), self.funcB(), self.funcC()])
         self.master.destroy()
