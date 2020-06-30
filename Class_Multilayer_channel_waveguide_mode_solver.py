@@ -147,8 +147,7 @@ class Mul_Ch_Wav_Mod_Sol(Frame):
     def fileDialog_saveas(self): # to browse locaation of a file
         self.vVaryH1LC_SaveAs_loc = filedialog.askdirectory(initialdir=os.getcwd(), title="Select the location")#(("all files", "*.*"), ("csv files", "*.csv")))
     def fileDialog(self): # to brows the file
-        self.vSimulat = filedialog.askopenfilename(initialdir=os.getcwd(), title="Select A File", filetype=
-        (("all files", "*.*"), ("csv files", "*.csv")))#(("all files", "*.*"), ("csv files", "*.csv")))
+        self.vSimulat = filedialog.askopenfilename(initialdir=os.getcwd(), title="Select A File")#(("all files", "*.*"), ("csv files", "*.csv")))
         if self.vSimulat:
             self.df = pd.read_csv(self.vSimulat, sep=' ', comment='#', header=None)
             self.dr=self.df.to_numpy()
